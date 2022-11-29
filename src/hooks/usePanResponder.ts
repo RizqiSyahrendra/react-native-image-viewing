@@ -40,6 +40,7 @@ type Props = {
   doubleTapToZoomEnabled: boolean;
   onLongPress: () => void;
   delayLongPress: number;
+  currentImageIndex: number;
 };
 
 const usePanResponder = ({
@@ -49,6 +50,7 @@ const usePanResponder = ({
   doubleTapToZoomEnabled,
   onLongPress,
   delayLongPress,
+  currentImageIndex,
 }: Props): Readonly<
   [GestureResponderHandlers, Animated.Value, Animated.ValueXY]
 > => {
@@ -70,6 +72,26 @@ const usePanResponder = ({
     initialTranslate,
     SCREEN
   );
+
+  const previousImageIndex = useRef(currentImageIndex);
+  useEffect(() => {
+    if (previousImageIndex.current !== currentImageIndex) {
+      Animated.parallel(
+        [
+          Animated.timing(scaleValue, {
+            toValue: initialScale,
+            duration: 0,
+            useNativeDriver: false,
+          }),
+        ],
+        { stopTogether: false }
+      ).start(() => {
+        currentScale = initialScale;
+        currentTranslate = initialTranslate;
+        previousImageIndex.current = currentImageIndex;
+      });
+    }
+  }, [currentImageIndex]);
 
   const getBounds = (scale: number) => {
     const scaledImageDimensions = {
