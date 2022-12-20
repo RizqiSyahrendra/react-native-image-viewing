@@ -15,6 +15,7 @@ import {
   VirtualizedList,
   ModalProps,
   Modal,
+  LogBox,
 } from "react-native";
 
 import ImageItem from "./components/ImageItem/ImageItem";
@@ -50,13 +51,17 @@ const DEFAULT_DELAY_LONG_PRESS = 800;
 const SCREEN = Dimensions.get("screen");
 const SCREEN_WIDTH = SCREEN.width;
 
+LogBox.ignoreLogs([
+  "Warning: This synthetic event is reused for performance reasons. If you're seeing this, you're accessing the property `nativeEvent` on a released/nullified synthetic event. This is set to null. If you must keep the original synthetic event around, use event.persist(). See https://reactjs.org/link/event-pooling for more information."
+]);
+
 function ImageViewing({
   images,
   keyExtractor,
   imageIndex,
   visible,
   onRequestClose,
-  onLongPress = () => {},
+  onLongPress = () => { },
   onImageIndexChange,
   animationType = DEFAULT_ANIMATION_TYPE,
   backgroundColor = DEFAULT_BG_COLOR,
@@ -70,8 +75,7 @@ function ImageViewing({
   const imageList = useRef<VirtualizedList<ImageSource>>(null);
   const [opacity, onRequestCloseEnhanced] = useRequestClose(onRequestClose);
   const [currentImageIndex, onScroll] = useImageIndexChange(imageIndex, SCREEN);
-  const [headerTransform, footerTransform, toggleBarsVisible] =
-    useAnimatedComponents();
+  const [headerTransform, footerTransform, isToggleBarsVisible, setToogleBarsVisible] = useAnimatedComponents();
 
   useEffect(() => {
     if (onImageIndexChange) {
@@ -83,10 +87,13 @@ function ImageViewing({
     (isScaled: boolean) => {
       // @ts-ignore
       imageList?.current?.setNativeProps({ scrollEnabled: !isScaled });
-      toggleBarsVisible(!isScaled);
     },
     [imageList]
   );
+
+  const onSinglePress = () => {
+    setToogleBarsVisible(!isToggleBarsVisible);
+  }
 
   if (!visible) {
     return null;
@@ -104,7 +111,11 @@ function ImageViewing({
     >
       <StatusBarManager presentationStyle={presentationStyle} />
       <View style={[styles.container, { opacity, backgroundColor }]}>
-        <Animated.View style={[styles.header, { transform: headerTransform }]}>
+        <Animated.View style={[
+          styles.header,
+          // @ts-ignore
+          { transform: headerTransform }
+        ]}>
           {typeof HeaderComponent !== "undefined" ? (
             React.createElement(HeaderComponent, {
               imageIndex: currentImageIndex,
@@ -137,6 +148,7 @@ function ImageViewing({
               imageSrc={imageSrc}
               onRequestClose={onRequestCloseEnhanced}
               onLongPress={onLongPress}
+              onSinglePress={onSinglePress}
               currentImageIndex={currentImageIndex}
               delayLongPress={delayLongPress}
               swipeToCloseEnabled={swipeToCloseEnabled}
@@ -149,13 +161,17 @@ function ImageViewing({
             keyExtractor
               ? keyExtractor(imageSrc, index)
               : typeof imageSrc === "number"
-              ? `${imageSrc}`
-              : imageSrc.uri
+                ? `${imageSrc}`
+                : imageSrc.uri
           }
         />
         {typeof FooterComponent !== "undefined" && (
           <Animated.View
-            style={[styles.footer, { transform: footerTransform }]}
+            style={[
+              styles.footer,
+              // @ts-ignore
+              { transform: footerTransform }
+            ]}
           >
             {React.createElement(FooterComponent, {
               imageIndex: currentImageIndex,

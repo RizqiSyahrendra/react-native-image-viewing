@@ -138,6 +138,7 @@ const ImageItem = ({
         >
           <Animated.Image
             source={imageSrc}
+            // @ts-ignore
             style={imageStylesWithOpacity}
             onLoad={() => setLoaded(true)}
           />

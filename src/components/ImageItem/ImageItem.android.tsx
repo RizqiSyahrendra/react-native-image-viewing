@@ -36,6 +36,7 @@ type Props = {
   onRequestClose: () => void;
   onZoom: (isZoomed: boolean) => void;
   onLongPress: (image: ImageSource) => void;
+  onSinglePress?: () => void;
   currentImageIndex: number;
   delayLongPress: number;
   swipeToCloseEnabled?: boolean;
@@ -47,7 +48,8 @@ const ImageItem = ({
   onZoom,
   onRequestClose,
   onLongPress,
- currentImageIndex,
+  onSinglePress,
+  currentImageIndex,
   delayLongPress,
   swipeToCloseEnabled = true,
   doubleTapToZoomEnabled = true,
@@ -81,6 +83,7 @@ const ImageItem = ({
     onZoom: onZoomPerformed,
     doubleTapToZoomEnabled,
     onLongPress: onLongPressHandler,
+    onSinglePress,
     delayLongPress,
     currentImageIndex,
   });
@@ -137,6 +140,7 @@ const ImageItem = ({
       <Animated.Image
         {...panHandlers}
         source={imageSrc}
+        // @ts-ignore
         style={imageStylesWithOpacity}
         onLoad={onLoaded}
       />

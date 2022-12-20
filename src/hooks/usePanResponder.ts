@@ -32,6 +32,8 @@ const MIN_DIMENSION = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT);
 const SCALE_MAX = 2;
 const DOUBLE_TAP_DELAY = 300;
 const OUT_BOUND_MULTIPLIER = 0.75;
+let IS_TAP_PRESSED = false;
+let TAP_COUNTER = 0;
 
 type Props = {
   initialScale: number;
@@ -39,6 +41,7 @@ type Props = {
   onZoom: (isZoomed: boolean) => void;
   doubleTapToZoomEnabled: boolean;
   onLongPress: () => void;
+  onSinglePress?: () => void;
   delayLongPress: number;
   currentImageIndex: number;
 };
@@ -49,6 +52,7 @@ const usePanResponder = ({
   onZoom,
   doubleTapToZoomEnabled,
   onLongPress,
+  onSinglePress,
   delayLongPress,
   currentImageIndex,
 }: Props): Readonly<
@@ -167,11 +171,28 @@ const usePanResponder = ({
       if (gestureState.numberActiveTouches > 1) return;
 
       const tapTS = Date.now();
-      // Handle double tap event by calculating diff between first and second taps timestamps
 
+      // Handle double tap event by calculating diff between first and second taps timestamps
       isDoubleTapPerformed = Boolean(
         lastTapTS && tapTS - lastTapTS < DOUBLE_TAP_DELAY
       );
+
+      // Handle single tap event
+      let tempTapCounter = TAP_COUNTER;
+      TAP_COUNTER++;
+      if (!IS_TAP_PRESSED) {
+        IS_TAP_PRESSED = true;
+        setTimeout(() => {
+          const onlySingleTap = (TAP_COUNTER - tempTapCounter) === 1;
+          const totalFingerTouch = event.nativeEvent?.touches?.length ?? 1;
+
+          if (totalFingerTouch === 1 && onlySingleTap && onSinglePress !== undefined) {
+            onSinglePress();
+          }
+
+          IS_TAP_PRESSED = false;
+        }, DOUBLE_TAP_DELAY);
+      }
 
       if (doubleTapToZoomEnabled && isDoubleTapPerformed) {
         const isScaled = currentTranslate.x !== initialTranslate.x; // currentScale !== initialScale;
@@ -181,16 +202,16 @@ const usePanResponder = ({
         const nextTranslate = isScaled
           ? initialTranslate
           : getTranslateInBounds(
-              {
-                x:
-                  initialTranslate.x +
-                  (SCREEN_WIDTH / 2 - touchX) * (targetScale / currentScale),
-                y:
-                  initialTranslate.y +
-                  (SCREEN_HEIGHT / 2 - touchY) * (targetScale / currentScale),
-              },
-              targetScale
-            );
+            {
+              x:
+                initialTranslate.x +
+                (SCREEN_WIDTH / 2 - touchX) * (targetScale / currentScale),
+              y:
+                initialTranslate.y +
+                (SCREEN_HEIGHT / 2 - touchY) * (targetScale / currentScale),
+            },
+            targetScale
+          );
 
         onZoom(!isScaled);
 
@@ -281,13 +302,13 @@ const usePanResponder = ({
             nextScale < initialScale
               ? initialTranslate.x
               : currentTranslate.x -
-                (currentTranslate.x - initialTranslate.x) / k;
+              (currentTranslate.x - initialTranslate.x) / k;
 
           const nextTranslateY =
             nextScale < initialScale
               ? initialTranslate.y
               : currentTranslate.y -
-                (currentTranslate.y - initialTranslate.y) / k;
+              (currentTranslate.y - initialTranslate.y) / k;
 
           translateValue.x.setValue(nextTranslateX);
           translateValue.y.setValue(nextTranslateY);

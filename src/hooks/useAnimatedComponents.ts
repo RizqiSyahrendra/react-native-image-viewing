@@ -6,6 +6,7 @@
  *
  */
 
+import { useEffect, useState } from "react";
 import { Animated } from "react-native";
 
 const INITIAL_POSITION = { x: 0, y: 0 };
@@ -17,9 +18,10 @@ const ANIMATION_CONFIG = {
 const useAnimatedComponents = () => {
   const headerTranslate = new Animated.ValueXY(INITIAL_POSITION);
   const footerTranslate = new Animated.ValueXY(INITIAL_POSITION);
+  const [isToggleBarsVisible, setToggleBarsVisible] = useState(true);
 
-  const toggleVisible = (isVisible: boolean) => {
-    if (isVisible) {
+  useEffect(() => {
+    if (isToggleBarsVisible) {
       Animated.parallel([
         Animated.timing(headerTranslate.y, { ...ANIMATION_CONFIG, toValue: 0 }),
         Animated.timing(footerTranslate.y, { ...ANIMATION_CONFIG, toValue: 0 }),
@@ -36,12 +38,12 @@ const useAnimatedComponents = () => {
         }),
       ]).start();
     }
-  };
+  }, [isToggleBarsVisible]);
 
   const headerTransform = headerTranslate.getTranslateTransform();
   const footerTransform = footerTranslate.getTranslateTransform();
 
-  return [headerTransform, footerTransform, toggleVisible] as const;
+  return [headerTransform, footerTransform, isToggleBarsVisible, setToggleBarsVisible] as const;
 };
 
 export default useAnimatedComponents;
